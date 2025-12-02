@@ -3,6 +3,7 @@ package mapper
 import (
 	"github.com/Dawit0/examAuth/internal/domain"
 	"github.com/Dawit0/examAuth/internal/infrastructure/repository/model"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func MapDomainToModel(user domain.User) (*model.UserModel, error) {
@@ -10,12 +11,13 @@ func MapDomainToModel(user domain.User) (*model.UserModel, error) {
 	badge := user.Badge()
 	isActive := user.IsActive()
 	score := user.Score()
+	pass, _ := bcrypt.GenerateFromPassword([]byte(user.Password()), bcrypt.DefaultCost)
 	return &model.UserModel{
 		ID:        user.ID(),
 		Username:  user.Username(),
 		Phone:     user.Phone(),
 		Email:     &email,
-		Password:  user.Password(),
+		Password:  string(pass),
 		CreatedAt: user.CreatedAt(),
 		IsActive:  &isActive,
 		Badge:     &badge,

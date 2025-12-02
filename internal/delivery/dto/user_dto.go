@@ -23,3 +23,8 @@ type UserResponse struct {
 	Score     float64
 	CreatedAt time.Time
 }
+
+type UserLogin struct {
+	Phone    string `json:"phone" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}

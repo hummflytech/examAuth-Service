@@ -6,6 +6,7 @@ import (
 	"github.com/Dawit0/examAuth/internal/delivery/dto"
 	"github.com/Dawit0/examAuth/internal/delivery/mapper"
 	"github.com/Dawit0/examAuth/internal/domain"
+	"github.com/Dawit0/examAuth/internal/infrastructure/security"
 	"github.com/Dawit0/examAuth/internal/service"
 	"github.com/gin-gonic/gin"
 )
@@ -45,4 +46,26 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, resp)
+}
+
+func (h *UserHandler) LoginUser(c *gin.Context) {
+	var dtos dto.UserLogin
+	if err := c.ShouldBindJSON(&dtos); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := h.usecase.UserLogin(dtos.Phone, dtos.Password)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	token, err := security.GenerateToken(user.ID())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"token": token})
 }

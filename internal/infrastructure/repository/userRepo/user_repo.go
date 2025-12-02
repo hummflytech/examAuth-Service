@@ -35,3 +35,18 @@ func (ur *UserRepo) CreateUser(user *domain.User) (*domain.User, error) {
 	return val, nil
 
 }
+
+func (ur *UserRepo) FindByPhone(phone string) (*domain.User, error) {
+	var models model.UserModel
+	err := ur.DB.Model(&model.UserModel{}).Where("phone=?", phone).First(&models).Error
+	if err != nil {
+		return nil, err
+	}
+
+	domain, err := mapper.MapModelToDomain(models)
+	if err != nil {
+		return nil, err
+	}
+
+	return domain, nil
+}
