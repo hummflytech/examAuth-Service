@@ -20,10 +20,10 @@ func (uc *UserService) CreateUser(user *domain.User) (*domain.User, error) {
 	if user == nil {
 		return nil, nil
 	}
-	val, err := uc.UserRepo.FindByPhone(user.Phone())
-	if err != nil {
-		return nil, err
-	}
+	val, _ := uc.UserRepo.FindByPhone(user.Phone())
+	// if err != nil {
+	// 	return nil, err
+	// }
 	if val != nil {
 		return nil, errors.New("user already exist at this phone number")
 	}
@@ -62,4 +62,15 @@ func (uc *UserService) DeleteUser(id uint) error {
 		return errors.New("user not found")
 	}
 	return uc.UserRepo.DeleteUser(id)
+}
+
+func (uc *UserService) UpdateUser(id uint, user *domain.User) (*domain.User, error) {
+	if user == nil {
+		return nil, nil
+	}
+	val, _ := uc.UserRepo.FindByID(id)
+	if val == nil {
+		return nil, errors.New("user not found")
+	}
+	return uc.UserRepo.UpdateUser(id, user)
 }

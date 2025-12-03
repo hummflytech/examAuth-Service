@@ -122,3 +122,35 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "user deleted successfully"})
 }
+
+func (h *UserHandler) UpdateUser(c *gin.Context) {
+	var dtos dto.UserCreate
+
+	if err := c.ShouldBindJSON(&dtos); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	val, err := domain.NewUser(dtos.Email, dtos.Password, dtos.Badge, dtos.Username, dtos.Phone, dtos.IsActive, dtos.Score)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	id := c.GetUint("user_id")
+	user, err := h.usecase.UpdateUser(uint(id), val)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.UserResponse{
+		ID:       id,
+		Email:    user.Email(),
+		Badge:    user.Badge(),
+		Username: user.Username(),
+		Phone:    user.Phone(),
+		IsActive: user.IsActive(),
+		Score:    user.Score(),
+	})
+
+}

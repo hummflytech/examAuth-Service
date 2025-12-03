@@ -96,3 +96,22 @@ func (ur *UserRepo) DeleteUser(id uint) error {
 	}
 	return nil
 }
+
+func (ur *UserRepo) UpdateUser(id uint, user *domain.User) (*domain.User, error) {
+	models, err := mapper.MapDomainToModel(*user)
+	if err != nil {
+		return nil, err
+	}
+
+	errs := ur.DB.Model(&model.UserModel{}).Where("id = ?", id).Updates(&models).Error
+	if errs != nil {
+		return nil, errs
+	}
+
+	domain, er := mapper.MapModelToDomain(*models)
+	if er != nil {
+		return nil, er
+	}
+
+	return domain, nil
+}

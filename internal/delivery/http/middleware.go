@@ -17,7 +17,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		tokenstr := strings.Trim(auth, "Bearer ")
+		tokenstr := strings.TrimPrefix(auth, "Bearer ")
 
 		token, errs := jwt.Parse(tokenstr, func(token *jwt.Token) (interface{}, error) {
 			return []byte(os.Getenv("JWT_SECRET")), nil
@@ -28,7 +28,8 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		c.Set("user_id", token.Claims)
+		userID := uint(token.Claims.(jwt.MapClaims)["user_id"].(float64))
+		c.Set("user_id", userID)
 		c.Next()
 	}
 }

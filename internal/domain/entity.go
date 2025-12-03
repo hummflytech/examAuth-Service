@@ -18,7 +18,7 @@ type User struct {
 }
 
 func NewUser(email *string, password string, badge *string, username, phone string, isactive *bool, score *float64) (*User, error) {
-	if len(*email) != 0 {
+	if email != nil && len(*email) != 0 {
 		regex := regexp.MustCompile(`^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$`)
 
 		if !regex.MatchString(*email) {
