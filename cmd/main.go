@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net"
+
 	"github.com/Dawit0/examAuth/internal/delivery/handler"
 	"github.com/Dawit0/examAuth/internal/infrastructure/database"
 	repo "github.com/Dawit0/examAuth/internal/infrastructure/repository/userRepo"
@@ -8,7 +10,10 @@ import (
 	"github.com/Dawit0/examAuth/internal/pkg/logger"
 	"github.com/Dawit0/examAuth/internal/server/middleware"
 	"github.com/Dawit0/examAuth/internal/service"
+	pb "github.com/Dawit0/examAuth/proto"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+	"google.golang.org/grpc"
 )
 
 func main() {
@@ -26,7 +31,7 @@ func main() {
 	userHandler := handler.NewUserHandler(usecase)
 	resetHandler := handler.NewForgetPasswordHandler(resetUserUseCase)
 
-	routes := gin.Default()
+	routes := gin.New()
 
 	routes.Use(
 		middleware.LoggingMiddleware(logger.Logger),
@@ -38,6 +43,26 @@ func main() {
 
 	logger.Logger.Info("Server started on :8080")
 
-	routes.Run(":8080")
+	go func() {
+		routes.Run(":8080")
+	}()
 
+	grpc_server := grpc.NewServer()
+	usecases := handler.NewGrpcHandler(usecase)
+	pb.RegisterAuthServiceServer(grpc_server, usecases)
+
+	lis, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		logger.Logger.Error("failed to listen: %v", zap.Error(err))
+		return
+	}
+	logger.Logger.Info("gRPC server started on :50051")
+	go func() {
+		if err := grpc_server.Serve(lis); err != nil {
+			logger.Logger.Error("failed to serve: %v", zap.Error(err))
+			return
+		}
+	}()
+
+	select {}
 }

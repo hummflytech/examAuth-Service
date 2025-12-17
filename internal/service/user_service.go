@@ -5,6 +5,8 @@ import (
 
 	"github.com/Dawit0/examAuth/internal/domain"
 	repo "github.com/Dawit0/examAuth/internal/infrastructure/repository/userRepo"
+	"github.com/Dawit0/examAuth/internal/infrastructure/security"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -73,4 +75,18 @@ func (uc *UserService) UpdateUser(id uint, user *domain.User) (*domain.User, err
 		return nil, errors.New("user not found")
 	}
 	return uc.UserRepo.UpdateUser(id, user)
+}
+
+func (uc *UserService) ValidateToke(token string) (bool, uint,error)  {
+	val, err := security.VerifyToken(token)
+
+	if err != nil || !val.Valid {
+		return false, 0, err
+	}
+
+	claims := val.Claims.(jwt.MapClaims)
+
+	user_id := claims["user_id"].(float64)
+
+	return true, uint(user_id), nil
 }
