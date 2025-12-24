@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  examapp:
+    image: natty98282/examapp-auth-be:${IMAGE_TAG}
+    container_name: examapp
+    envfile:
+      - .env
+    ports:
+      - "8081:8080"
+    networks:
+      - examapp-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+
+networks:
+  examapp-network:
+    driver: bridge
