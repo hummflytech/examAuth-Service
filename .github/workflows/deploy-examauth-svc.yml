@@ -58,14 +58,6 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
           source: ".env"
           target: "cd /data/exam-app/examAuth-Service"
-      - name: Copy compose to server
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          source: "docker-compose.yml"
-          target: "cd /data/exam-app/examAuth-Service"
 
       - name: Deploy to server
         uses: appleboy/ssh-action@master
