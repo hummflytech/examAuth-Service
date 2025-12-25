@@ -12,7 +12,7 @@ import (
 func DBconnection() *gorm.DB {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("unable to load variables from .env file")
+		log.Println("unable to load variables from .env file, relying on system envs")
 	}
 
 	dns := os.Getenv("DB_URL")
