@@ -14,8 +14,30 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+
+	_ "github.com/Dawit0/examAuth/docs"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
+// @title           Auth Service API
+// @version         1.0
+// @description     This is the authentication service for the Exam application.
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host      ethioexam.hummflytech.com
+// @BasePath  /auth/api/v1
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
 	logger.InitLogger()
 	db := database.DBconnection()
@@ -40,6 +62,8 @@ func main() {
 
 	route.UserRoute(userHandler, routes)
 	route.ResetRoute(resetHandler, routes)
+
+	routes.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	logger.Logger.Info("Server started on :8080")
 

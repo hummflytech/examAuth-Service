@@ -16,6 +16,17 @@ func NewForgetPasswordHandler(resetUserService *service.ResetUserService) *Forge
 	return &ForgetPasswordHandler{resetUserService: resetUserService}
 }
 
+// RequestResetPasswordEmail godoc
+// @Summary      Request password reset email
+// @Description  Send an OTP to the user's email for password reset
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dto.RequestResetDTO  true  "Reset Request Data"
+// @Success      200      {object}  map[string]string
+// @Failure      400      {object}  map[string]string
+// @Failure      500      {object}  map[string]string
+// @Router       /reset [post]
 func (h *ForgetPasswordHandler) RequestResetPasswordEmail(c *gin.Context) {
 	var req dto.RequestResetDTO
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -30,6 +41,18 @@ func (h *ForgetPasswordHandler) RequestResetPasswordEmail(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "password reset email sent"})
 }
 
+// ResetPassword godoc
+// @Summary      Reset password
+// @Description  Reset the user's password using the OTP
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        reset  body      dto.ResetPasswordDTO  true  "Reset Password Data"
+// @Success      200    {object}  map[string]string
+// @Failure      400    {object}  map[string]string
+// @Failure      401    {object}  map[string]string
+// @Failure      500    {object}  map[string]string
+// @Router       /reset-password [post]
 func (h *ForgetPasswordHandler) ResetPassword(c *gin.Context) {
 	var req dto.ResetPasswordDTO
 	if err := c.ShouldBindJSON(&req); err != nil {

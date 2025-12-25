@@ -20,6 +20,17 @@ func NewUserHandler(uc *service.UserService) *UserHandler {
 	return &UserHandler{usecase: uc}
 }
 
+// CreateUser godoc
+// @Summary      Create a new user
+// @Description  Create a new user with the input payload
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        user  body      dto.UserCreate  true  "User Create Data"
+// @Success      200   {object}  dto.UserResponse
+// @Failure      400   {object}  map[string]string
+// @Failure      500   {object}  map[string]string
+// @Router       /create [post]
 func (h *UserHandler) CreateUser(c *gin.Context) {
 	var dtos dto.UserCreate
 	if err := c.ShouldBindJSON(&dtos); err != nil {
@@ -49,6 +60,17 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+// LoginUser godoc
+// @Summary      Login a user
+// @Description  Login a user and return a JWT token
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        login  body      dto.UserLogin  true  "User Login Data"
+// @Success      200    {object}  map[string]string
+// @Failure      400    {object}  map[string]string
+// @Failure      500    {object}  map[string]string
+// @Router       /login [post]
 func (h *UserHandler) LoginUser(c *gin.Context) {
 	var dtos dto.UserLogin
 	if err := c.ShouldBindJSON(&dtos); err != nil {
@@ -71,6 +93,16 @@ func (h *UserHandler) LoginUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
+// FindByID godoc
+// @Summary      Get a user by ID
+// @Description  Get details of a specific user by their ID
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        id   path      int  true  "User ID"
+// @Success      200  {object}  dto.UserResponse
+// @Failure      500  {object}  map[string]string
+// @Router       /user/{id} [get]
 func (h *UserHandler) FindByID(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
@@ -89,6 +121,15 @@ func (h *UserHandler) FindByID(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// AllUsers godoc
+// @Summary      Get all users
+// @Description  Get a list of all users
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  map[string][]dto.UserResponse
+// @Failure      500  {object}  map[string]string
+// @Router       /users [get]
 func (h *UserHandler) AllUsers(c *gin.Context) {
 	out, err := h.usecase.AllUsers()
 	if err != nil {
@@ -110,6 +151,16 @@ func (h *UserHandler) AllUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": response})
 }
 
+// DeleteUser godoc
+// @Summary      Delete a user
+// @Description  Delete a user by ID
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        id   path      int  true  "User ID"
+// @Success      200  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /delete/{id} [delete]
 func (h *UserHandler) DeleteUser(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
@@ -123,6 +174,18 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "user deleted successfully"})
 }
 
+// UpdateUser godoc
+// @Summary      Update a user
+// @Description  Update user details. Requires JWT token.
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        user  body      dto.UserCreate  true  "User Update Data"
+// @Success      200   {object}  dto.UserResponse
+// @Failure      400   {object}  map[string]string
+// @Failure      500   {object}  map[string]string
+// @Router       /update [put]
 func (h *UserHandler) UpdateUser(c *gin.Context) {
 	var dtos dto.UserCreate
 
