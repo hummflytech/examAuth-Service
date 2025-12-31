@@ -8,6 +8,7 @@ services:
       - .env
     ports:
       - "8081:8080"
+      - "50051:50051"
     networks:
       - examapp-network
     restart: unless-stopped
