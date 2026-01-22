@@ -2,6 +2,7 @@ package main
 
 import (
 	"net"
+	"time"
 
 	"github.com/Dawit0/examAuth/internal/delivery/handler"
 	"github.com/Dawit0/examAuth/internal/infrastructure/database"
@@ -11,6 +12,7 @@ import (
 	"github.com/Dawit0/examAuth/internal/server/middleware"
 	"github.com/Dawit0/examAuth/internal/service"
 	pb "github.com/Dawit0/examAuth/proto"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -54,6 +56,16 @@ func main() {
 	resetHandler := handler.NewForgetPasswordHandler(resetUserUseCase)
 
 	routes := gin.New()
+
+	// CORS configuration
+	routes.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	routes.Use(
 		middleware.LoggingMiddleware(logger.Logger),
