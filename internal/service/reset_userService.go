@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/Dawit0/examAuth/internal/infrastructure/repository/userRepo"
+	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type SendMailer interface {
@@ -27,6 +29,9 @@ func NewResetUserService(repo *userRepo.ResetUserRepo, mailer SendMailer) *Reset
 func (r *ResetUserService) RequestResetPasswordEmail(email string) error {
 	user, err := r.repo.GetByEmail(email)
 	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return errors.New("user not found")
+		}
 		return err
 	}
 
@@ -35,7 +40,7 @@ func (r *ResetUserService) RequestResetPasswordEmail(email string) error {
 		return err
 	}
 	expiredAt := time.Now().Add(r.otpTTl)
-	err = r.repo.SavePasswordReset(email, user.ID(), otp, expiredAt)
+	err = r.repo.SavePasswordReset(email, user.ID.Hex(), otp, expiredAt)
 	if err != nil {
 		return err
 	}
@@ -43,24 +48,31 @@ func (r *ResetUserService) RequestResetPasswordEmail(email string) error {
 }
 
 func (r *ResetUserService) ResetPassword(email string, otp string, newPassword string) error {
-	Token, err := r.repo.FindValidResetByEmailAndOTP(email, otp)
+	token, err := r.repo.FindValidResetByEmailAndOTP(email, otp)
 	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return errors.New("invalid reset token")
+		}
 		return err
 	}
-	if Token == nil || Token.Used() {
+	if token == nil || token.Used {
 		return errors.New("invalid reset token")
 	}
-	err = r.repo.MarkPasswordResetUsed(Token.Id())
+	err = r.repo.MarkPasswordResetUsed(token.ID.Hex())
 	if err != nil {
 		return err
 	}
-	user, err := r.repo.GetByEmail(Token.Email())
+	user, err := r.repo.GetByEmail(token.Email)
 	if err != nil {
 		return err
 	}
 
-	user.SetPassword(newPassword)
-	err = r.repo.UpdateUserPassword(user.ID(), newPassword)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	err = r.repo.UpdateUserPassword(user.ID.Hex(), string(hashedPassword))
 	if err != nil {
 		return err
 	}

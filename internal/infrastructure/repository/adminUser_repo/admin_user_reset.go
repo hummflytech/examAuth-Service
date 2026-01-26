@@ -1,4 +1,4 @@
-package userRepo
+package adminuserrepo
 
 import (
 	"context"
@@ -10,37 +10,37 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type ResetUserRepo struct {
+type AdminUserResetRepo struct {
 	DB *mongo.Database
 }
 
-func NewResetUserRepo(db *mongo.Database) *ResetUserRepo {
-	return &ResetUserRepo{DB: db}
+func NewAdminUserResetRepo(db *mongo.Database) *AdminUserResetRepo {
+	return &AdminUserResetRepo{DB: db}
 }
 
-func (r *ResetUserRepo) GetByEmail(email string) (*model.UserModel, error) {
-	var user model.UserModel
+func (aur *AdminUserResetRepo) GetByEmail(email string) (*model.AdminUserModel, error) {
+	var user model.AdminUserModel
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	err := r.DB.Collection("users").FindOne(ctx, bson.M{"email": email}).Decode(&user)
+	err := aur.DB.Collection("admin_users").FindOne(ctx, bson.M{"email": email}).Decode(&user)
 	if err != nil {
 		return nil, err
 	}
 	return &user, nil
 }
 
-func (r *ResetUserRepo) SavePasswordReset(email string, userID string, otp string, expiresAt time.Time) error {
+func (aur *AdminUserResetRepo) SavePasswordReset(email string, userID string, otp string, expiredAt time.Time) error {
 	objID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
 		return err
 	}
 
-	reset := model.PasswordResetModel{
+	reset := model.AdminPasswordResetModel{
 		UserID:    objID,
 		Email:     email,
 		OTP:       otp,
-		ExpiresAt: expiresAt,
+		ExpiresAt: expiredAt,
 		Used:      false,
 		CreatedAt: time.Now(),
 	}
@@ -48,16 +48,16 @@ func (r *ResetUserRepo) SavePasswordReset(email string, userID string, otp strin
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err = r.DB.Collection("password_resets").InsertOne(ctx, reset)
+	_, err = aur.DB.Collection("admin_password_resets").InsertOne(ctx, reset)
 	return err
 }
 
-func (r *ResetUserRepo) FindValidResetByEmailAndOTP(email, otp string) (*model.PasswordResetModel, error) {
-	var reset model.PasswordResetModel
+func (aur *AdminUserResetRepo) FindValidResetByEmailAndOTP(email, otp string) (*model.AdminPasswordResetModel, error) {
+	var reset model.AdminPasswordResetModel
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	err := r.DB.Collection("password_resets").FindOne(ctx, bson.M{
+	err := aur.DB.Collection("admin_password_resets").FindOne(ctx, bson.M{
 		"email":      email,
 		"otp":        otp,
 		"used":       false,
@@ -70,7 +70,7 @@ func (r *ResetUserRepo) FindValidResetByEmailAndOTP(email, otp string) (*model.P
 	return &reset, nil
 }
 
-func (r *ResetUserRepo) MarkPasswordResetUsed(id string) error {
+func (aur *AdminUserResetRepo) MarkPasswordResetUsed(id string) error {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return err
@@ -79,11 +79,11 @@ func (r *ResetUserRepo) MarkPasswordResetUsed(id string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err = r.DB.Collection("password_resets").UpdateOne(ctx, bson.M{"_id": objID}, bson.M{"$set": bson.M{"used": true}})
+	_, err = aur.DB.Collection("admin_password_resets").UpdateOne(ctx, bson.M{"_id": objID}, bson.M{"$set": bson.M{"used": true}})
 	return err
 }
 
-func (r *ResetUserRepo) UpdateUserPassword(userID string, hashedPassword string) error {
+func (aur *AdminUserResetRepo) UpdateAdminPassword(userID string, hashedPassword string) error {
 	objID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
 		return err
@@ -92,6 +92,6 @@ func (r *ResetUserRepo) UpdateUserPassword(userID string, hashedPassword string)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err = r.DB.Collection("users").UpdateOne(ctx, bson.M{"_id": objID}, bson.M{"$set": bson.M{"password": hashedPassword}})
+	_, err = aur.DB.Collection("admin_users").UpdateOne(ctx, bson.M{"_id": objID}, bson.M{"$set": bson.M{"password": hashedPassword}})
 	return err
 }

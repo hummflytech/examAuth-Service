@@ -27,7 +27,7 @@ func (uc *UserService) CreateUser(user *domain.User) (*domain.User, error) {
 	// 	return nil, err
 	// }
 	if val != nil {
-		return nil, errors.New("user already exist at this phone number")
+		return nil, errors.New("user already exist at this Email")
 	}
 	return uc.UserRepo.CreateUser(user)
 }
@@ -47,7 +47,7 @@ func (uc *UserService) UserLogin(email string, password string) (*domain.User, e
 
 }
 
-func (uc *UserService) FindByID(id uint) (*domain.User, error) {
+func (uc *UserService) FindByID(id string) (*domain.User, error) {
 	return uc.UserRepo.FindByID(id)
 }
 
@@ -55,7 +55,7 @@ func (uc *UserService) AllUsers() ([]domain.User, error) {
 	return uc.UserRepo.AllUsers()
 }
 
-func (uc *UserService) DeleteUser(id uint) error {
+func (uc *UserService) DeleteUser(id string) error {
 	val, err := uc.UserRepo.FindByID(id)
 	if err != nil {
 		return errors.New("user not found")
@@ -66,7 +66,7 @@ func (uc *UserService) DeleteUser(id uint) error {
 	return uc.UserRepo.DeleteUser(id)
 }
 
-func (uc *UserService) UpdateUser(id uint, user *domain.User) (*domain.User, error) {
+func (uc *UserService) UpdateUser(id string, user *domain.User) (*domain.User, error) {
 	if user == nil {
 		return nil, nil
 	}
@@ -74,19 +74,22 @@ func (uc *UserService) UpdateUser(id uint, user *domain.User) (*domain.User, err
 	if val == nil {
 		return nil, errors.New("user not found")
 	}
+	if user.Password() == "" {
+		user.SetPassword(val.Password())
+	}
 	return uc.UserRepo.UpdateUser(id, user)
 }
 
-func (uc *UserService) ValidateToke(token string) (bool, uint,error)  {
+func (uc *UserService) ValidateToke(token string) (bool, string, error) {
 	val, err := security.VerifyToken(token)
 
 	if err != nil || !val.Valid {
-		return false, 0, err
+		return false, "", err
 	}
 
 	claims := val.Claims.(jwt.MapClaims)
 
-	user_id := claims["user_id"].(float64)
+	user_id := claims["user_id"].(string)
 
-	return true, uint(user_id), nil
+	return true, user_id, nil
 }

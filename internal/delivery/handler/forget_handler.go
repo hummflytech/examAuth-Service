@@ -66,13 +66,13 @@ func (h *ForgetPasswordHandler) ResetPassword(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "OTP expired",
 			})
-		case "invalid credentials", "record not found":
+		case "invalid reset token", "invalid credentials", "record not found":
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "invalid OTP",
 			})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "failed to reset password",
+				"error": "failed to reset password: " + err.Error(),
 			})
 		}
 		return

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/Dawit0/examAuth/internal/delivery/dto"
 	"github.com/Dawit0/examAuth/internal/delivery/mapper"
@@ -99,14 +98,14 @@ func (h *UserHandler) LoginUser(c *gin.Context) {
 // @Tags         users
 // @Accept       json
 // @Produce      json
-// @Param        id   path      int  true  "User ID"
+// @Param        id   path      string  true  "User ID"
 // @Success      200  {object}  dto.UserResponse
 // @Failure      500  {object}  map[string]string
 // @Router       /user/{id} [get]
 func (h *UserHandler) FindByID(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
+	id := c.Param("id")
 
-	domain, err := h.usecase.FindByID(uint(id))
+	domain, err := h.usecase.FindByID(id)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -115,7 +114,8 @@ func (h *UserHandler) FindByID(c *gin.Context) {
 
 	response, err := mapper.MapDomaintoResponse(*domain)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -157,14 +157,14 @@ func (h *UserHandler) AllUsers(c *gin.Context) {
 // @Tags         users
 // @Accept       json
 // @Produce      json
-// @Param        id   path      int  true  "User ID"
+// @Param        id   path      string  true  "User ID"
 // @Success      200  {object}  map[string]string
 // @Failure      500  {object}  map[string]string
 // @Router       /delete/{id} [delete]
 func (h *UserHandler) DeleteUser(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
+	id := c.Param("id")
 
-	err := h.usecase.DeleteUser(uint(id))
+	err := h.usecase.DeleteUser(id)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -199,8 +199,8 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	id := c.GetUint("user_id")
-	user, err := h.usecase.UpdateUser(uint(id), val)
+	id := c.GetString("user_id")
+	user, err := h.usecase.UpdateUser(id, val)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

@@ -11,11 +11,22 @@ services:
       - "50051:50051"
     networks:
       - examapp-network
+    depends_on:
+      - mongodb
     restart: unless-stopped
 
-volumes:
-  postgres_data:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - examapp-network
 
+volumes:
+  mongo_data:
 
 networks:
   examapp-network:

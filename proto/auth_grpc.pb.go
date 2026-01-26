@@ -19,9 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_ValidateUser_FullMethodName = "/auth.AuthService/ValidateUser"
-	AuthService_GetUser_FullMethodName      = "/auth.AuthService/GetUser"
-	AuthService_UpdateUser_FullMethodName   = "/auth.AuthService/UpdateUser"
+	AuthService_ValidateUser_FullMethodName    = "/auth.AuthService/ValidateUser"
+	AuthService_GetUser_FullMethodName         = "/auth.AuthService/GetUser"
+	AuthService_UpdateUser_FullMethodName      = "/auth.AuthService/UpdateUser"
+	AuthService_UpdateAdminUser_FullMethodName = "/auth.AuthService/UpdateAdminUser"
+	AuthService_GetAdminUser_FullMethodName    = "/auth.AuthService/GetAdminUser"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -31,6 +33,8 @@ type AuthServiceClient interface {
 	ValidateUser(ctx context.Context, in *ValidateUserRequest, opts ...grpc.CallOption) (*ValidateUserResponse, error)
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error)
+	UpdateAdminUser(ctx context.Context, in *UpdateAdminUserRequest, opts ...grpc.CallOption) (*UpdateAdminUserResponse, error)
+	GetAdminUser(ctx context.Context, in *GetAdminUserRequest, opts ...grpc.CallOption) (*GetAdminUserResponse, error)
 }
 
 type authServiceClient struct {
@@ -71,6 +75,26 @@ func (c *authServiceClient) UpdateUser(ctx context.Context, in *UpdateUserReques
 	return out, nil
 }
 
+func (c *authServiceClient) UpdateAdminUser(ctx context.Context, in *UpdateAdminUserRequest, opts ...grpc.CallOption) (*UpdateAdminUserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateAdminUserResponse)
+	err := c.cc.Invoke(ctx, AuthService_UpdateAdminUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) GetAdminUser(ctx context.Context, in *GetAdminUserRequest, opts ...grpc.CallOption) (*GetAdminUserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetAdminUserResponse)
+	err := c.cc.Invoke(ctx, AuthService_GetAdminUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
@@ -78,6 +102,8 @@ type AuthServiceServer interface {
 	ValidateUser(context.Context, *ValidateUserRequest) (*ValidateUserResponse, error)
 	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
 	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
+	UpdateAdminUser(context.Context, *UpdateAdminUserRequest) (*UpdateAdminUserResponse, error)
+	GetAdminUser(context.Context, *GetAdminUserRequest) (*GetAdminUserResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -96,6 +122,12 @@ func (UnimplementedAuthServiceServer) GetUser(context.Context, *GetUserRequest) 
 }
 func (UnimplementedAuthServiceServer) UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateUser not implemented")
+}
+func (UnimplementedAuthServiceServer) UpdateAdminUser(context.Context, *UpdateAdminUserRequest) (*UpdateAdminUserResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateAdminUser not implemented")
+}
+func (UnimplementedAuthServiceServer) GetAdminUser(context.Context, *GetAdminUserRequest) (*GetAdminUserResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAdminUser not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -172,6 +204,42 @@ func _AuthService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_UpdateAdminUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateAdminUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).UpdateAdminUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_UpdateAdminUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).UpdateAdminUser(ctx, req.(*UpdateAdminUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_GetAdminUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAdminUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).GetAdminUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_GetAdminUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).GetAdminUser(ctx, req.(*GetAdminUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -190,6 +258,14 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateUser",
 			Handler:    _AuthService_UpdateUser_Handler,
+		},
+		{
+			MethodName: "UpdateAdminUser",
+			Handler:    _AuthService_UpdateAdminUser_Handler,
+		},
+		{
+			MethodName: "GetAdminUser",
+			Handler:    _AuthService_GetAdminUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

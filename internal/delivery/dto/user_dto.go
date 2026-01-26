@@ -1,6 +1,8 @@
 package dto
 
-import "time"
+import (
+	"time"
+)
 
 type UserCreate struct {
 	Username string   `json:"username" binding:"required"`
@@ -12,8 +14,30 @@ type UserCreate struct {
 	Score    *float64 `json:"score"`
 }
 
+type AdminUserCreate struct {
+	Username string   `json:"username" binding:"required"`
+	Phone    string   `json:"phone" binding:"required"`
+	Email    string   `json:"email" binding:"required"`
+	Password string   `json:"password" binding:"required"`
+}
+
+type AdminUserLogin struct {
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
+type AdminUserResponse struct {
+	ID        string
+	Username  string
+	Phone     string
+	Email     string
+	Password  string
+	IsActive  bool
+	CreatedAt time.Time
+}
+
 type UserResponse struct {
-	ID        uint
+	ID        string
 	Username  string
 	Phone     string
 	Email     string
@@ -38,3 +62,4 @@ type ResetPasswordDTO struct {
 	OTP         string `json:"otp" binding:"required"`
 	NewPassword string `json:"new_password" binding:"required,min=6"`
 }
+

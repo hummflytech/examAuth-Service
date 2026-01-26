@@ -6,7 +6,7 @@ import (
 )
 
 type User struct {
-	id        uint
+	id        string
 	username  string
 	phone     string
 	email     string
@@ -101,7 +101,7 @@ func (u User) CreatedAt() time.Time {
 	return u.createdAT
 }
 
-func (u User) ID() uint {
+func (u User) ID() string {
 	return u.id
 }
 
@@ -113,7 +113,7 @@ func (u User) Phone() string {
 	return u.phone
 }
 
-func (u *User) Id_Set(id uint) {
+func (u *User) Id_Set(id string) {
 	u.id = id
 }
 
