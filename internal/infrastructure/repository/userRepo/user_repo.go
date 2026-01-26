@@ -1,18 +1,23 @@
 package userRepo
 
 import (
+	"context"
+	"errors"
+	"time"
+
 	"github.com/Dawit0/examAuth/internal/domain"
 	"github.com/Dawit0/examAuth/internal/infrastructure/repository/mapper"
 	"github.com/Dawit0/examAuth/internal/infrastructure/repository/model"
-	"gorm.io/gorm"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type UserRepo struct {
-	DB *gorm.DB
+	DB *mongo.Database
 }
 
-func NewUserRepo(db *gorm.DB) *UserRepo {
-	db.AutoMigrate(&model.UserModel{}, &model.PasswordResetModel{})
+func NewUserRepo(db *mongo.Database) *UserRepo {
 	return &UserRepo{DB: db}
 }
 
@@ -22,10 +27,15 @@ func (ur *UserRepo) CreateUser(user *domain.User) (*domain.User, error) {
 		return nil, errs
 	}
 
-	err := ur.DB.Model(&model.UserModel{}).Create(&models).Error
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	res, err := ur.DB.Collection("users").InsertOne(ctx, models)
 	if err != nil {
 		return nil, err
 	}
+
+	models.ID = res.InsertedID.(primitive.ObjectID)
 
 	val, err := mapper.MapModelToDomain(*models)
 	if err != nil {
@@ -33,12 +43,14 @@ func (ur *UserRepo) CreateUser(user *domain.User) (*domain.User, error) {
 	}
 
 	return val, nil
-
 }
 
 func (ur *UserRepo) FindByEmail(email string) (*domain.User, error) {
 	var models model.UserModel
-	err := ur.DB.Model(&model.UserModel{}).Where("email=?", email).First(&models).Error
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err := ur.DB.Collection("users").FindOne(ctx, bson.M{"email": email}).Decode(&models)
 	if err != nil {
 		return nil, err
 	}
@@ -51,9 +63,17 @@ func (ur *UserRepo) FindByEmail(email string) (*domain.User, error) {
 	return domain, nil
 }
 
-func (ur *UserRepo) FindByID(id uint) (*domain.User, error) {
+func (ur *UserRepo) FindByID(id string) (*domain.User, error) {
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
 	var models model.UserModel
-	err := ur.DB.Model(&model.UserModel{}).Where("id = ?", id).First(&models).Error
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = ur.DB.Collection("users").FindOne(ctx, bson.M{"_id": objID}).Decode(&models)
 	if err != nil {
 		return nil, err
 	}
@@ -67,51 +87,90 @@ func (ur *UserRepo) FindByID(id uint) (*domain.User, error) {
 }
 
 func (ur *UserRepo) AllUsers() ([]domain.User, error) {
-	var models []model.UserModel
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-	err := ur.DB.Model(&model.UserModel{}).Find(&models).Error
+	cursor, err := ur.DB.Collection("users").Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var models []model.UserModel
+	if err = cursor.All(ctx, &models); err != nil {
+		return nil, err
+	}
+
+	domainUsers := make([]domain.User, 0, len(models))
+	for _, item := range models {
+		val, err := mapper.MapModelToDomain(item)
+		if err != nil {
+			continue
+		}
+		domainUsers = append(domainUsers, *val)
+	}
+
+	return domainUsers, nil
+}
+
+func (ur *UserRepo) DeleteUser(id string) error {
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err = ur.DB.Collection("users").DeleteOne(ctx, bson.M{"_id": objID})
+	return err
+}
+
+func (ur *UserRepo) UpdateUser(id string, user *domain.User) (*domain.User, error) {
+	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
 	}
 
-	domain := make([]domain.User, 0, len(models))
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-	for _, item := range models {
-		val, err := mapper.MapModelToDomain(item)
-
-		if err != nil {
-			continue
-		}
-
-		domain = append(domain, *val)
+	// 1. Check if the email is already taken by ANOTHER user
+	// Filter: { email: "new@email.com", _id: { $ne: current_user_id } }
+	duplicateFilter := bson.M{
+		"email": user.Email(),
+		"_id":   bson.M{"$ne": objID},
 	}
 
-	return domain, nil
-}
-
-func (ur *UserRepo) DeleteUser(id uint) error {
-	err := ur.DB.Model(&model.UserModel{}).Delete(&model.UserModel{}, id).Error
+	count, err := ur.DB.Collection("users").CountDocuments(ctx, duplicateFilter)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
-}
+	if count > 0 {
+		return nil, errors.New("email is already in use by another account")
+	}
 
-func (ur *UserRepo) UpdateUser(id uint, user *domain.User) (*domain.User, error) {
+	// 2. Map and Prepare Update
 	models, err := mapper.MapDomainToModel(*user)
 	if err != nil {
 		return nil, err
 	}
+	models.ID = objID
 
-	errs := ur.DB.Model(&model.UserModel{}).Where("id = ?", id).Updates(&models).Error
-	if errs != nil {
-		return nil, errs
+	update := bson.M{
+		"$set": models,
 	}
 
-	domain, er := mapper.MapModelToDomain(*models)
+	// 3. Execute Update
+	_, err = ur.DB.Collection("users").UpdateOne(ctx, bson.M{"_id": objID}, update)
+	if err != nil {
+		return nil, err
+	}
+
+	domainRes, er := mapper.MapModelToDomain(*models)
 	if er != nil {
 		return nil, er
 	}
 
-	return domain, nil
+	return domainRes, nil
 }

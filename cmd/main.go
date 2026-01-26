@@ -6,6 +6,7 @@ import (
 
 	"github.com/Dawit0/examAuth/internal/delivery/handler"
 	"github.com/Dawit0/examAuth/internal/infrastructure/database"
+	adminrepo "github.com/Dawit0/examAuth/internal/infrastructure/repository/adminUser_repo"
 	repo "github.com/Dawit0/examAuth/internal/infrastructure/repository/userRepo"
 	"github.com/Dawit0/examAuth/internal/infrastructure/route"
 	"github.com/Dawit0/examAuth/internal/pkg/logger"
@@ -48,12 +49,18 @@ func main() {
 
 	userRepos := repo.NewUserRepo(db)
 	resetUserRepo := repo.NewResetUserRepo(db)
+	ausRepos := adminrepo.NewAdminUserRepo(db)
+	resetAdminRepo := adminrepo.NewAdminUserResetRepo(db)
 
 	usecase := service.NewUserService(userRepos)
+	ausecase := service.NewAdminUserService(ausRepos)
 	resetUserUseCase := service.NewResetUserService(resetUserRepo, service.NewGmailMailer("workenhdawit@gmail.com", "vlvs ygcl odpe gzee"))
+	resetAdminUseCase := service.NewAdminResetService(resetAdminRepo, service.NewGmailMailer("workenhdawit@gmail.com", "vlvs ygcl odpe gzee"))
 
 	userHandler := handler.NewUserHandler(usecase)
+	auserhandler := handler.NewAdminUserHandler(ausecase)
 	resetHandler := handler.NewForgetPasswordHandler(resetUserUseCase)
+	resetAdminHandler := handler.NewAdminForgetHandler(resetAdminUseCase)
 
 	routes := gin.New()
 
@@ -73,7 +80,9 @@ func main() {
 	)
 
 	route.UserRoute(userHandler, routes)
+	route.AdminUserRoute(auserhandler, routes)
 	route.ResetRoute(resetHandler, routes)
+	route.ResetAdminPasswordRoute(resetAdminHandler, routes)
 
 	routes.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -84,7 +93,7 @@ func main() {
 	}()
 
 	grpc_server := grpc.NewServer()
-	usecases := handler.NewGrpcHandler(usecase)
+	usecases := handler.NewGrpcHandler(usecase, ausecase)
 	pb.RegisterAuthServiceServer(grpc_server, usecases)
 
 	lis, err := net.Listen("tcp", ":50051")

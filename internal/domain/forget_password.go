@@ -21,31 +21,30 @@ func NewForgetPassword(userID uint, email string, otp string, expiredAt time.Tim
 	}, nil
 }
 
-func (f ForgetPassword) Id() uint {
+func (f ForgetPassword) AdminId() uint {
 	return f.id
 }
 
-func (f ForgetPassword) UserId() uint {
+func (f ForgetPassword) AdminUserId() uint {
 	return f.userID
 }
 
-func (f ForgetPassword) Email() string {
+func (f ForgetPassword) AdminEmail() string {
 	return f.email
 }
 
-func (f ForgetPassword) Otp() string {
+func (f ForgetPassword) AdminOtp() string {
 	return f.otp
 }
 
-func (f ForgetPassword) ExpiredAt() time.Time {
+func (f ForgetPassword) AdminExpiredAt() time.Time {
 	return f.expiredAt
 }
 
-func (f ForgetPassword) Used() bool {
+func (f ForgetPassword) AdminUsed() bool {
 	return f.used
 }
 
-func (f *ForgetPassword) Set_Id(id uint) {
+func (f *ForgetPassword) Set_AdminId(id uint) {
 	f.id = id
 }
-

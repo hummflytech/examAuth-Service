@@ -28,7 +28,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		userID := uint(token.Claims.(jwt.MapClaims)["user_id"].(float64))
+		userID := token.Claims.(jwt.MapClaims)["user_id"].(string)
 		c.Set("user_id", userID)
 		c.Next()
 	}

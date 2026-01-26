@@ -6,7 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type UserModel struct {
+type AdminUserModel struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty"`
 	Username  string             `bson:"username"`
 	Phone     string             `bson:"phone"`
@@ -14,6 +14,4 @@ type UserModel struct {
 	Password  string             `bson:"password"`
 	CreatedAt time.Time          `bson:"created_at"`
 	IsActive  *bool              `bson:"is_active"`
-	Badge     *string            `bson:"badge"`
-	Score     *float64           `bson:"score"`
 }
